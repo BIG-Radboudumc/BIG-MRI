@@ -1,6 +1,6 @@
 # BIG-MRI
 
-Official repository for **BIG-MRI: Breast Imaging Group MRI Challenge**, a MICCAI 2026 challenge.
+Official repository for **BIG-MRI: Breast Imaging Group MRI Challenge**.
 
 BIG-MRI focuses on **breast cancer risk prediction from breast MRI**. The goal is to estimate, for each woman, the absolute risk of incident breast cancer within **2 years** and **5 years**. The challenge benchmarks MRI-only and multimodal AI methods in screening/high-risk MRI cohorts under blinded evaluation.
 
@@ -84,7 +84,6 @@ Calibration metrics may also be reported to support clinical interpretation, but
 ## Important Links
 
 - Challenge website: https://big-radboudumc.github.io/
-- OpenReview page: https://openreview.net/group?id=MICCAI.org/2026/Challenge/BIG-MRI
 - GitHub repository: https://github.com/BIG-Radboudumc/BIG-MRI
 - Training data on Hugging Face: Coming soon
 - Grand Challenge submission portal: Coming soon
