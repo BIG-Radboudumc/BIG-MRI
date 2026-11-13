@@ -2,7 +2,8 @@
 
 The input of the model is the subtraction image (first post-contrast minus
 pre-contrast), computed from the output of
-preprocessing/preprocess_images_v2.py.
+preprocessing/preprocess_images_v2.py. It is used at the full 1 mm resolution,
+352 x 352 x 176 voxels.
 """
 
 from pathlib import Path
@@ -19,11 +20,7 @@ from monai.transforms import (
     RandGaussianNoise,
     RandZoom,
 )
-from torch.nn.functional import avg_pool3d
 from torch.utils.data import Dataset
-
-
-DOWNSAMPLE = 2  # 1 mm, 352 x 352 x 176 voxels -> 2 mm, 176 x 176 x 88 voxels
 
 
 def load_image(pre_path, post_path):
@@ -39,8 +36,7 @@ def load_image(pre_path, post_path):
     if upper > 0:
         image = np.clip(image / upper, 0, 1)
 
-    image = torch.from_numpy(image)[None]
-    return avg_pool3d(image[None], DOWNSAMPLE)[0]
+    return torch.from_numpy(image)[None]
 
 
 class RiskDataset(Dataset):
@@ -67,14 +63,14 @@ class RiskDataset(Dataset):
                         mode="trilinear",
                         padding_mode="minimum",
                     ),
-                    # Shift by up to 4 voxels (8 mm).
-                    RandAffine(prob=0.5, translate_range=4, padding_mode="zeros"),
+                    # Shift by up to 8 voxels (8 mm).
+                    RandAffine(prob=0.5, translate_range=8, padding_mode="zeros"),
                     # Set a few small blocks to zero.
                     RandCoarseDropout(
                         prob=0.5,
                         holes=4,
                         max_holes=10,
-                        spatial_size=(6, 8, 8),
+                        spatial_size=(12, 16, 16),
                         fill_value=0,
                     ),
                     RandGaussianNoise(prob=0.5, mean=0.0, std=0.05),
