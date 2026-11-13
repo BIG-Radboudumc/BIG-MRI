@@ -4,8 +4,8 @@ Utilities for preparing BIG-MRI DCE breast MRI data. Two versions are provided.
 
 | Version | Script | Summary |
 | --- | --- | --- |
-| v1 | [`v1/resample_big_mri.py`](v1/resample_big_mri.py) | Resamples each T1 image independently to 1 mm isotropic spacing. |
-| v2 | [`v2/preprocess_big_mri.py`](v2/preprocess_big_mri.py) | Standardizes each pre/post-contrast pair: LPS orientation, one shared 1 mm grid, fixed size. |
+| v1 | [`preprocess_images_v1.py`](preprocess_images_v1.py) | Resamples each T1 image independently to 1 mm isotropic spacing. |
+| v2 | [`preprocess_images_v2.py`](preprocess_images_v2.py) | Standardizes each pre/post-contrast pair: LPS orientation, one shared 1 mm grid, fixed size. |
 
 Both versions expect the same input layout:
 
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 Set `INPUT_ROOT` and `OUTPUT_ROOT` at the top of the script, then run:
 
 ```bash
-python preprocessing/v1/resample_big_mri.py
+python preprocessing/preprocess_images_v1.py
 ```
 
 ## v2
@@ -48,7 +48,7 @@ For each exam, the pre-contrast image and the first post-contrast image are proc
 No registration and no intensity normalization are applied. Input files named `T1_W_pre.nii.gz` and `T1_W_post_1.nii.gz` are also accepted. The output is always named `T1_pre.nii.gz` and `T1_post_1.nii.gz` and mirrors the input folder layout. Exams that already exist in the output directory are skipped.
 
 ```bash
-python preprocessing/v2/preprocess_big_mri.py --input-root /path/to/BIG-MRI --output-root /path/to/output
+python preprocessing/preprocess_images_v2.py --input-root /path/to/BIG-MRI --output-root /path/to/output
 ```
 
 ## Label table

@@ -55,7 +55,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--labels", type=Path, required=True, help="Label table (CSV)")
     parser.add_argument(
-        "--image-root", type=Path, required=True, help="Output folder of preprocessing/v2"
+        "--image-root", type=Path, required=True, help="Folder of preprocessed images"
     )
     parser.add_argument(
         "--output-dir", type=Path, required=True, help="Folder for the model and the log"
