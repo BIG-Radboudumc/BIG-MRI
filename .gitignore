@@ -34,3 +34,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local data, results, and machine-specific scripts
+/data/
+/output/
+/logs/
+/scripts/local/
