@@ -30,11 +30,11 @@ This repository is under active preparation. Planned contents include:
 | Component | Status | Description |
 | --- | --- | --- |
 | `README.md` | Available | Official repository overview |
-| Baseline training pipeline | Coming soon | Reference model training code for participants |
-| Preprocessing utilities | Coming soon | Utilities for preparing DCE breast MRI data |
+| Baseline training pipeline | Available | Reference model training code for participants (see [`src/`](src/) and [`scripts/run_baseline.sh`](scripts/run_baseline.sh)) |
+| Preprocessing utilities | Available | Utilities for preparing DCE breast MRI data (see [`preprocessing/`](preprocessing/)) |
 | Grand Challenge submission template | Coming soon | Docker template and local testing instructions |
 | Submission format specification | Coming soon | Required model input/output contract and prediction format |
-| Evaluation and ranking scripts/details | Coming soon | Metrics, aggregation, and leaderboard computation details |
+| Evaluation and ranking scripts/details | Partly available | Metrics, aggregation, and leaderboard computation details (metrics: see [`docs/evaluation.md`](docs/evaluation.md)) |
 
 The repository structure may change as challenge materials are finalized.
 
