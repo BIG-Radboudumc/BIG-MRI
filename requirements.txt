@@ -1,2 +1,7 @@
 numpy
 SimpleITK>=2.3
+torch
+monai
+huggingface_hub
+pandas
+scikit-learn
