@@ -2,7 +2,7 @@
 
 The script reads every exam in a folder of images preprocessed with
 preprocessing/preprocess_images_v2.py and writes one row per exam to a CSV
-file.
+file. If several models are given, their predicted risks are averaged.
 """
 
 import argparse
@@ -18,7 +18,11 @@ from model import RiskModel
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--model", type=Path, required=True, help="Trained model, for example best_model.pt"
+        "--model",
+        type=Path,
+        required=True,
+        nargs="+",
+        help="One or more trained models, for example best_model.pt",
     )
     parser.add_argument(
         "--image-root", type=Path, required=True, help="Folder of preprocessed images"
@@ -29,9 +33,12 @@ def main():
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = RiskModel(pretrained=False)
-    model.load_state_dict(torch.load(args.model, map_location=device))
-    model.to(device).eval()
+    models = []
+    for path in args.model:
+        model = RiskModel(pretrained=False)
+        model.load_state_dict(torch.load(path, map_location=device))
+        models.append(model.to(device).eval())
+    print(f"Loaded {len(models)} model(s).", flush=True)
 
     exam_dirs = sorted(path.parent for path in args.image_root.glob("*/*/T1_pre.nii.gz"))
     print(f"Found {len(exam_dirs)} exams.", flush=True)
@@ -39,8 +46,12 @@ def main():
     rows = []
     for index, exam_dir in enumerate(exam_dirs, start=1):
         image = load_image(exam_dir / "T1_pre.nii.gz", exam_dir / "T1_post_1.nii.gz")
+        image = image[None].to(device)
         with torch.no_grad():
-            risk_2y, risk_5y = torch.sigmoid(model(image[None].to(device)))[0].tolist()
+            risks = torch.stack([torch.sigmoid(model(image))[0] for model in models])
+
+        # Average the predicted risks of all models.
+        risk_2y, risk_5y = risks.mean(dim=0).tolist()
 
         # Cancer within 2 years is also cancer within 5 years, so the 5-year
         # risk cannot be lower than the 2-year risk.
