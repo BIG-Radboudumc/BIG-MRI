@@ -13,16 +13,14 @@ The baseline is a 3D ResNet-18. Its input is the subtraction image (first post-c
 ## Input
 
 1. Images preprocessed with [`preprocessing/v2`](../preprocessing/).
-2. A label table in CSV format with one row per exam:
+2. A label table in CSV format with one row per exam, created with [`preprocessing/create_labels.py`](../preprocessing/). The training uses these columns:
 
 | Column | Content |
 | --- | --- |
-| `patient_id` | Patient identifier, used to split the data by patient. |
 | `exam_id` | Exam folder relative to the image folder, for example `BIGMRI_0001/20200101`. |
 | `label_2y` | 1 if breast cancer within 2 years, otherwise 0. |
 | `label_5y` | 1 if breast cancer within 5 years, otherwise 0. |
-
-The script that creates this table from the clinical data is coming soon.
+| `fold` | `test` for the independent test set, or the cross-validation fold `0` to `3`. |
 
 ## Usage
 
@@ -38,7 +36,7 @@ Train the model:
 python training/train.py --labels /path/to/labels.csv --image-root /path/to/preprocessed --output-dir /path/to/output
 ```
 
-- The data is split into 5 folds by patient. `--fold` selects the validation fold (default 0).
+- The label table assigns every patient to the independent test set or to one of 4 folds. `--fold` selects the validation fold (0 to 3, default 0); the other folds are used for training. The test set is never used during training.
 - Positive exams are rare, so they receive a larger weight in the loss.
 - The AUC for 2 years and for 5 years is computed on the validation fold after every epoch.
 

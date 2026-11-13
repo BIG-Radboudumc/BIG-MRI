@@ -50,3 +50,28 @@ No registration and no intensity normalization are applied. Input files named `T
 ```bash
 python preprocessing/v2/preprocess_big_mri.py --input-root /path/to/BIG-MRI --output-root /path/to/output
 ```
+
+## Label table
+
+[`create_labels.py`](create_labels.py) creates the label table of the baseline from the clinical table. The clinical table has one row per lesion; the label table has one row per exam.
+
+```bash
+python preprocessing/create_labels.py --clinical /path/to/clinical.xlsx --output /path/to/labels.csv
+```
+
+| Column | Content |
+| --- | --- |
+| `patient_id` | Patient identifier (`release_id` in the clinical table). |
+| `exam_id` | Exam folder (`exam_folder` in the clinical table), for example `BIGMRI_0001/20200101`. |
+| `label_2y` | 1 if breast cancer within 2 years after the exam, otherwise 0. |
+| `label_5y` | 1 if breast cancer within 5 years after the exam, otherwise 0. |
+| `years_to_cancer` | Time from the exam to breast cancer in years. Empty if there is no cancer. |
+| `years_to_last_followup` | Follow-up time after the exam in years. |
+| `fold` | `test` for the independent test set, or the cross-validation fold `0` to `3`. |
+
+How the columns are defined:
+
+- **Time to cancer.** If `cancer_present` is 1, the time is 0. Otherwise, if the cancer detection date is after the exam date, the time is the interval between the two dates. In all other cases (no detection date, or a detection date before the exam) the exam has no cancer and the time is empty. No exam is excluded.
+- **Labels.** `label_2y` is 1 if the time to cancer is less than 2 years, and `label_5y` is 1 if it is less than 5 years. All other exams are labeled 0, regardless of their follow-up time.
+- **Follow-up.** The follow-up of a patient is assumed to end one year after the last exam of that patient. The follow-up time of an exam is the interval from the exam to that date.
+- **Data split.** 20% of the patients form the independent test set. The other patients are divided into 4 cross-validation folds. The split is made by patient, so all exams of a patient are in the same part, and every part has a similar share of patients with cancer. The split is fixed by `--seed` (default 0).

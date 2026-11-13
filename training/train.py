@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import StratifiedGroupKFold
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -20,14 +19,6 @@ from model import RiskModel
 
 
 LABELS = ["label_2y", "label_5y"]
-
-
-def split_by_patient(table, fold, seed):
-    """Split the table into training and validation exams, by patient."""
-    splitter = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=seed)
-    splits = list(splitter.split(table, table["label_5y"], groups=table["patient_id"]))
-    train_index, valid_index = splits[fold]
-    return table.iloc[train_index], table.iloc[valid_index]
 
 
 def run_epoch(model, loader, loss_function, device, optimizer=None):
@@ -69,7 +60,7 @@ def main():
     parser.add_argument(
         "--output-dir", type=Path, required=True, help="Folder for the model and the log"
     )
-    parser.add_argument("--fold", type=int, default=0, help="Validation fold, 0 to 4")
+    parser.add_argument("--fold", type=int, default=0, help="Validation fold, 0 to 3")
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
@@ -85,9 +76,12 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # 1. Data: split by patient, so no patient is in both sets.
-    table = pd.read_csv(args.labels)
-    train_table, valid_table = split_by_patient(table, args.fold, args.seed)
+    # 1. Data: the label table assigns every patient to a fold or to the test
+    #    set. One fold is used for validation, the other folds for training.
+    #    The test set is not used here.
+    table = pd.read_csv(args.labels, dtype={"fold": str})
+    valid_table = table[table["fold"] == str(args.fold)]
+    train_table = table[~table["fold"].isin([str(args.fold), "test"])]
     print(f"Training exams: {len(train_table)}, validation exams: {len(valid_table)}")
     train_loader = DataLoader(
         RiskDataset(train_table, args.image_root, train=True),
