@@ -50,6 +50,12 @@ The output folder contains `best_model.pt` (best mean validation AUC), `last_mod
 python src/predict.py --model /path/to/best_model.pt --image-root /path/to/preprocessed --output /path/to/predictions.csv
 ```
 
+To use an ensemble, pass several models to `--model`. Their predicted risks are averaged, for example the four models of the cross-validation:
+
+```bash
+python src/predict.py --model fold0/best_model.pt fold1/best_model.pt fold2/best_model.pt fold3/best_model.pt --image-root /path/to/preprocessed --output /path/to/predictions.csv
+```
+
 The output has one row per exam:
 
 | Column | Content |
