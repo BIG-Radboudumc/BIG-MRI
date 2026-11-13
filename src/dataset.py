@@ -1,7 +1,8 @@
 """Data loading for the baseline model.
 
 The input of the model is the subtraction image (first post-contrast minus
-pre-contrast), computed from the output of preprocessing/v2.
+pre-contrast), computed from the output of
+preprocessing/preprocess_images_v2.py.
 """
 
 from pathlib import Path

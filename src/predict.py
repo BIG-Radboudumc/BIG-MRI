@@ -1,21 +1,18 @@
 """Predict the 2-year and 5-year breast cancer risk with a trained baseline model.
 
 The script reads every exam in a folder of images preprocessed with
-preprocessing/v2 and writes one row per exam to a CSV file.
+preprocessing/preprocess_images_v2.py and writes one row per exam to a CSV
+file.
 """
 
 import argparse
-import sys
 from pathlib import Path
 
 import pandas as pd
 import torch
 
-# The model and the image loading are shared with the training code.
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "training"))
-
-from dataset import load_image  # noqa: E402
-from model import RiskModel  # noqa: E402
+from dataset import load_image
+from model import RiskModel
 
 
 def main():
@@ -24,7 +21,7 @@ def main():
         "--model", type=Path, required=True, help="Trained model, for example best_model.pt"
     )
     parser.add_argument(
-        "--image-root", type=Path, required=True, help="Output folder of preprocessing/v2"
+        "--image-root", type=Path, required=True, help="Folder of preprocessed images"
     )
     parser.add_argument(
         "--output", type=Path, required=True, help="CSV file for the predictions"

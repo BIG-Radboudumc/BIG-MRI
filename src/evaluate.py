@@ -18,7 +18,7 @@ HORIZONS = ["2y", "5y"]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--predictions", type=Path, required=True, help="Output of inference/predict.py"
+        "--predictions", type=Path, required=True, help="Output of predict.py"
     )
     parser.add_argument("--labels", type=Path, required=True, help="Label table (CSV)")
     parser.add_argument("--output", type=Path, help="Optional JSON file for the metrics")

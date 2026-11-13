@@ -4,4 +4,5 @@ torch
 monai
 huggingface_hub
 pandas
+openpyxl
 scikit-learn

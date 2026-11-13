@@ -1,32 +1,6 @@
-# Evaluation
+# Evaluation metrics
 
-Evaluation and ranking scripts for BIG-MRI.
-
-[`evaluate.py`](evaluate.py) compares a prediction table with a label table and reports the AUC for the 2-year and the 5-year risk.
-
-## Input
-
-1. A prediction table written by [`inference/predict.py`](../inference/), with the columns `exam_id`, `risk_2y`, and `risk_5y`.
-2. A label table in CSV format, with the columns `exam_id`, `label_2y`, and `label_5y`. This is the same table that is used for training.
-
-Only exams that appear in both tables are evaluated. Evaluate on exams that were not used to train the model, for example by passing a label table that contains only the validation exams.
-
-## Usage
-
-```bash
-python evaluation/evaluate.py --predictions /path/to/predictions.csv --labels /path/to/labels.csv
-```
-
-Add `--output /path/to/metrics.json` to also save the metrics to a file.
-
-## Metrics
-
-| Metric | Definition |
-| --- | --- |
-| `auc_2y` | Area under the ROC curve of `risk_2y` against `label_2y`. |
-| `auc_5y` | Area under the ROC curve of `risk_5y` against `label_5y`. |
-
-Harrell's C-index and the leaderboard computation details are coming soon.
+This document explains the metrics reported by [`src/evaluate.py`](../src/evaluate.py).
 
 ## How the AUC is computed
 
