@@ -2,12 +2,12 @@
 
 Source code of the BIG-MRI baseline: training, prediction, and evaluation.
 
-The baseline is a 3D ResNet-18. Its input is the subtraction image (first post-contrast minus pre-contrast). It has two outputs: the risk of breast cancer within 2 years and within 5 years. Each output is trained as a binary classification task.
+The baseline is a 3D ResNet-18. Its input is the subtraction image (first post-contrast minus pre-contrast) at the full 1 mm resolution, 352 x 352 x 176 voxels. It has two outputs: the risk of breast cancer within 2 years and within 5 years. Each output is trained as a binary classification task.
 
 | File | Content |
 | --- | --- |
 | [`model.py`](model.py) | 3D ResNet-18 with two outputs. Starts from the public MedicalNet weights by default. |
-| [`dataset.py`](dataset.py) | Reads the preprocessed images, computes the subtraction image, scales intensities, downsamples to 2 mm, and applies augmentation. |
+| [`dataset.py`](dataset.py) | Reads the preprocessed images, computes the subtraction image, scales intensities, and applies augmentation. |
 | [`train.py`](train.py) | Training and validation loop. |
 | [`predict.py`](predict.py) | Predicts the 2-year and 5-year risk with a trained model. |
 | [`evaluate.py`](evaluate.py) | Computes the AUC and the C-index of the predicted risks. |
