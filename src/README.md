@@ -10,7 +10,7 @@ The baseline is a 3D ResNet-18. Its input is the subtraction image (first post-c
 | [`dataset.py`](dataset.py) | Reads the preprocessed images, computes the subtraction image, scales intensities, downsamples to 2 mm, and applies augmentation. |
 | [`train.py`](train.py) | Training and validation loop. |
 | [`predict.py`](predict.py) | Predicts the 2-year and 5-year risk with a trained model. |
-| [`evaluate.py`](evaluate.py) | Computes the AUC of the predicted risks. |
+| [`evaluate.py`](evaluate.py) | Computes the AUC and the C-index of the predicted risks. |
 
 Install the dependencies from the repository root:
 
@@ -28,6 +28,8 @@ pip install -r requirements.txt
 | `exam_id` | Exam folder relative to the image folder, for example `BIGMRI_0001/20200101`. |
 | `label_2y` | 1 if breast cancer within 2 years, otherwise 0. |
 | `label_5y` | 1 if breast cancer within 5 years, otherwise 0. |
+| `years_to_cancer` | Time from the exam to breast cancer in years, empty if there is no cancer. Used for the evaluation. |
+| `years_to_last_followup` | Follow-up time after the exam in years. Used for the evaluation. |
 | `fold` | `test` for the independent test set, or the cross-validation fold `0` to `3`. |
 
 ## Training
@@ -68,19 +70,20 @@ The 5-year risk is never lower than the 2-year risk: if the model output for 5 y
 
 ## Evaluation
 
-[`evaluate.py`](evaluate.py) compares a prediction table with a label table and reports the AUC for the 2-year and the 5-year risk.
+[`evaluate.py`](evaluate.py) compares a prediction table with a label table and reports the AUC for the 2-year and the 5-year risk and Harrell's C-index.
 
 ```bash
-python src/evaluate.py --predictions /path/to/predictions.csv --labels /path/to/labels.csv
+python src/evaluate.py --predictions /path/to/predictions.csv --labels /path/to/labels.csv --fold test
 ```
 
-Add `--output /path/to/metrics.json` to also save the metrics to a file.
+`--fold` selects the part of the label table to evaluate: `test` for the independent test set, or `0` to `3` for one cross-validation fold. Without `--fold`, all exams are evaluated. Evaluate on exams that were not used to train the model.
 
-Only exams that appear in both tables are evaluated. Evaluate on exams that were not used to train the model, for example by passing a label table that contains only the validation exams.
+Add `--output /path/to/metrics.json` to also save the metrics to a file. Only exams that appear in both tables are evaluated.
 
 | Metric | Definition |
 | --- | --- |
-| `auc_2y` | Area under the ROC curve of `risk_2y` against `label_2y`. |
-| `auc_5y` | Area under the ROC curve of `risk_5y` against `label_5y`. |
+| `auc_2y` | AUC of `risk_2y` for breast cancer within 2 years. Exams without cancer and with less than 2 years of follow-up are excluded. |
+| `auc_5y` | AUC of `risk_5y` for breast cancer within 5 years. Exams without cancer and with less than 5 years of follow-up are excluded. |
+| `c_index` | Harrell's C-index of `risk_5y` over the full follow-up. |
 
-See [`docs/evaluation.md`](../docs/evaluation.md) for a detailed explanation of the AUC. Harrell's C-index and the leaderboard computation details are coming soon.
+See [`docs/evaluation.md`](../docs/evaluation.md) for a detailed explanation of both metrics. The leaderboard computation details are coming soon.
