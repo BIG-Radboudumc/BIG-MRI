@@ -1,7 +1,8 @@
 """Train the baseline model for 2-year and 5-year breast cancer risk prediction.
 
-The model is a 3D ResNet-18 with two outputs. Each output is trained as a
-binary classification task: cancer within 2 years, and cancer within 5 years.
+The model is a 3D ResNet-18 or a 2D ResNet-18 on slices, with two outputs.
+Each output is trained as a binary classification task: cancer within 2 years,
+and cancer within 5 years.
 """
 
 import argparse
@@ -15,14 +16,17 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from dataset import RiskDataset
-from model import RiskModel
+from model import MODELS
 
 
 LABELS = ["label_2y", "label_5y"]
 
 
-def run_epoch(model, loader, loss_function, device, optimizer=None):
-    """Run one epoch. Return the mean loss, the predicted risks and the labels."""
+def run_epoch(model, loader, loss_function, device, scaler, optimizer=None):
+    """Run one epoch. Return the mean loss, the predicted risks and the labels.
+
+    The scaler switches mixed precision on or off.
+    """
     training = optimizer is not None
     model.train(training)
     losses, risks, targets = [], [], []
@@ -30,15 +34,17 @@ def run_epoch(model, loader, loss_function, device, optimizer=None):
     for images, labels in loader:
         images, labels = images.to(device), labels.to(device)
         with torch.set_grad_enabled(training):
-            logits = model(images)
-            loss = loss_function(logits, labels)
+            with torch.autocast(device.type, enabled=scaler.is_enabled()):
+                logits = model(images)
+                loss = loss_function(logits, labels)
         if training:
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
         losses.append(loss.item())
-        risks.append(torch.sigmoid(logits.detach()).cpu().numpy())
+        risks.append(torch.sigmoid(logits.detach().float()).cpu().numpy())
         targets.append(labels.cpu().numpy())
 
     return np.mean(losses), np.concatenate(risks), np.concatenate(targets)
@@ -60,9 +66,20 @@ def main():
     parser.add_argument(
         "--output-dir", type=Path, required=True, help="Folder for the model and the log"
     )
+    parser.add_argument(
+        "--architecture",
+        choices=list(MODELS),
+        default="3d",
+        help="3d: 3D ResNet-18, 2d: 2D ResNet-18 on slices",
+    )
     parser.add_argument("--fold", type=int, default=0, help="Validation fold, 0 to 3")
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument(
+        "--mixed-precision",
+        action="store_true",
+        help="Use mixed precision to reduce the GPU memory",
+    )
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--seed", type=int, default=0)
@@ -98,20 +115,25 @@ def main():
 
     # 2. Model, loss and optimizer. Positive exams are rare, so they get a
     #    larger weight in the loss: the number of negatives per positive.
-    model = RiskModel(pretrained=not args.no_pretrained).to(device)
+    model = MODELS[args.architecture](pretrained=not args.no_pretrained).to(device)
     positives = train_table[LABELS].sum().to_numpy()
     negatives = len(train_table) - positives
     positive_weight = torch.tensor(negatives / positives, dtype=torch.float32)
     loss_function = nn.BCEWithLogitsLoss(pos_weight=positive_weight.to(device))
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
+    scaler = torch.amp.GradScaler(device.type, enabled=args.mixed_precision)
 
     # 3. Training loop: keep the model with the best mean validation AUC.
     best_auc = 0.0
     log = []
     for epoch in range(1, args.epochs + 1):
-        train_loss, _, _ = run_epoch(model, train_loader, loss_function, device, optimizer)
-        valid_loss, risks, targets = run_epoch(model, valid_loader, loss_function, device)
+        train_loss, _, _ = run_epoch(
+            model, train_loader, loss_function, device, scaler, optimizer
+        )
+        valid_loss, risks, targets = run_epoch(
+            model, valid_loader, loss_function, device, scaler
+        )
         scheduler.step()
 
         auc_2y = compute_auc(targets[:, 0], risks[:, 0])

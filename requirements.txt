@@ -1,6 +1,7 @@
 numpy
 SimpleITK>=2.3
 torch
+torchvision
 monai
 huggingface_hub
 pandas
