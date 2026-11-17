@@ -4,9 +4,11 @@ Source code of the BIG-MRI baseline: training, prediction, and evaluation.
 
 The baseline is a 3D ResNet-18. Its input is the subtraction image (first post-contrast minus pre-contrast) at the full 1 mm resolution, 352 x 352 x 176 voxels. It has two outputs: the risk of breast cancer within 2 years and within 5 years. Each output is trained as a binary classification task.
 
+A second baseline is a 2D ResNet-18 on slices: it encodes every axial slice of the same subtraction image and averages the features of all slices. It is selected with `--architecture 2d`.
+
 | File | Content |
 | --- | --- |
-| [`model.py`](model.py) | 3D ResNet-18 with two outputs. Starts from the public MedicalNet weights by default. |
+| [`model.py`](model.py) | 3D ResNet-18 with two outputs. Starts from the public MedicalNet weights by default. Also contains the 2D ResNet-18 on slices, which starts from the public ImageNet weights. |
 | [`dataset.py`](dataset.py) | Reads the preprocessed images, computes the subtraction image, scales intensities, and applies augmentation. |
 | [`train.py`](train.py) | Training and validation loop. |
 | [`predict.py`](predict.py) | Predicts the 2-year and 5-year risk with a trained model. |
@@ -39,6 +41,8 @@ python src/train.py --labels /path/to/labels.csv --image-root /path/to/preproces
 ```
 
 - The label table assigns every patient to the independent test set or to one of 4 folds. `--fold` selects the validation fold (0 to 3, default 0); the other folds are used for training. The test set is never used during training.
+- `--architecture` selects the model: `3d` for the 3D ResNet-18 (default) or `2d` for the 2D ResNet-18 on slices.
+- `--mixed-precision` reduces the GPU memory. For example, the 2D ResNet-18 was trained with `--architecture 2d --batch-size 8 --mixed-precision` on a GPU with 48 GB; this uses about 40 GB.
 - Positive exams are rare, so they receive a larger weight in the loss.
 - The AUC for 2 years and for 5 years is computed on the validation fold after every epoch.
 
@@ -57,6 +61,10 @@ To use an ensemble, pass several models to `--model`. Their predicted risks are 
 ```bash
 python src/predict.py --model fold0/best_model.pt fold1/best_model.pt fold2/best_model.pt fold3/best_model.pt --image-root /path/to/preprocessed --output /path/to/predictions.csv
 ```
+
+For models trained with `--architecture 2d`, pass the same option to `predict.py`.
+
+`--workers` sets the number of processes that read the images (default 4), and `--batch-size` the number of exams per forward pass (default 1).
 
 The output has one row per exam:
 
